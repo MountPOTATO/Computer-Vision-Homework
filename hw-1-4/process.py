@@ -6,13 +6,14 @@
  # @Date        : 2022/3/16 8:19 下午
 """
 
-
+from math import sqrt, hypot
+from numpy import arccos
 import numpy as np
-import scipy
-import matplotlib.image as mp
+from itertools import combinations
 import cv2
 
-import utils
+
+
 def pic_LoG_filter(sigma):
     #according to 3-sigma principle,sigma_times should be 3*2=6
     sigma_times=6
@@ -35,16 +36,16 @@ def convolution(kernel, origin_img):
     :param origin_img:
     :return:
     """
+
     y_k,x_k=kernel.shape
     y,x=origin_img.shape
-    new_img=[]
-    for i in range(y-y_k):
-        line=[]
-        for j in range(x-x_k):
+    origin_img=np.pad(origin_img,(0,y_k-1))
+    new_img=np.zeros((y,x),dtype=np.float)
+    for i in range(y):
+        for j in range(x):
             img_slice=origin_img[i:i+y_k,j:j+x_k]
-            line.append(np.sum(np.multiply(kernel,img_slice)))
-        new_img.append(line)
-    return np.array(new_img)
+            new_img[i][j]=np.sum(np.multiply(kernel,img_slice))
+    return new_img
 
 #
 # utils.show_pic_from_array(pic_LoG_filter(5))
@@ -52,48 +53,120 @@ def convolution(kernel, origin_img):
 
 def pic_convolution(origin_img):
     conv_img_list=[]
-    conv_img_num=5
-    sigma_ratio=1.2
+    conv_img_num=13
+    sigma_ratio=1.12
     sigma=1
     for i in range(conv_img_num):
         sigma*=sigma_ratio
         kernel_LoG=pic_LoG_filter(sigma)
-        # use np.pad to fill the edge of the image
+
+        # using cv2
         conv_result=cv2.filter2D(origin_img, -1, kernel_LoG)
+
+        # hand-write convolution function(slow)
         # conv_result = convolution(kernel_LoG,origin_img)
+
         # utils.show_pic_from_array(conv_result)
-        # print(conv_result)
+
+        # use np.pad to fill the edge of the image
         image=np.pad(conv_result,((1,1),(1,1)),'constant')
 
-        conv_img_list.append(np.array(image))
+        conv_img_list.append(image)
     return np.array(conv_img_list)
 
+
+
+
 def blob_maximum_extract(conv_img_list):
-    max_coord=[]
+
+    z_set=set()
+    blobs=[]
     if len(conv_img_list)==0:
         print("Error: blob_maximum_extract should be applied after convolution")
         exit(-1)
     (h,w)=conv_img_list[0].shape
-    for i in range(1,h):
-        for j in range(1,w):
+    for i in range(1,h-5):
+        for j in range(1,w-5):
             kernel_img=conv_img_list[:,i-1:i+2,j-1:j+2]
             threshold=np.max(kernel_img)
-            if threshold>=6:
-                max_index=np.array(kernel_img).argmax()
-                z,x,y=np.unravel_index(max_index,kernel_img.shape)
-                #DoG
-                max_coord.append((i+x-1,j+y-1,2**z))
-    print(len(max_coord))
+            if threshold>=20:
+                max_index=kernel_img.argmax()
+                z,y,x=np.unravel_index(max_index,kernel_img.shape)
+                blobs.append((i+y-1,j+x-1,1.12**z))
+                z_set.add(1.12**z)
 
+    print("found {} blobs".format(len(blobs)))
+    z_list=list(z_set)
+    z_list.sort()
+    print("sigma value list: ",z_list)
 
-    return np.array(list(set(max_coord)))
-
-
-
-
-
-
+    return np.array(list(set(blobs)))
 
 
 
+
+
+def blob_overlap(blob1, blob2):
+    """Finds the overlapping area fraction between two blobs.
+    Returns a float representing fraction of overlapped area.
+    Parameters
+    ----------
+    blob1 : sequence
+        A sequence of ``(y,x,sigma)``, where ``x,y`` are coordinates of blob
+        and sigma is the standard deviation of the Gaussian kernel which
+        detected the blob.
+    blob2 : sequence
+        A sequence of ``(y,x,sigma)``, where ``x,y`` are coordinates of blob
+        and sigma is the standard deviation of the Gaussian kernel which
+        detected the blob.
+    Returns
+    -------
+    f : float
+        Fraction of overlapped area.
+    """
+    root2 = sqrt(2)
+
+    # extent of the blob is given by sqrt(2)*scale
+    r1 = blob1[2] * root2
+    r2 = blob2[2] * root2
+
+    d = hypot(blob1[0] - blob2[0], blob1[1] - blob2[1])
+
+    if d > r1 + r2:
+        return 0
+
+    # one blob is inside the other, the smaller blob must die
+    if d <= abs(r1 - r2):
+        return 1
+
+    ratio1 = (d ** 2 + r1 ** 2 - r2 ** 2) / (2 * d * r1)
+    ratio1 = np.clip(ratio1, -1, 1)
+    acos1 = arccos(ratio1)
+
+    ratio2 = (d ** 2 + r2 ** 2 - r1 ** 2) / (2 * d * r2)
+    ratio2 = np.clip(ratio2, -1, 1)
+    acos2 = arccos(ratio2)
+
+    a = -d + r2 + r1
+    b = d - r2 + r1
+    c = d + r2 - r1
+    d = d + r2 + r1
+    area = r1 ** 2 * acos1 + r2 ** 2 * acos2 - 0.5 * sqrt(abs(a * b * c * d))
+
+    return area / (np.pi * (min(r1, r2) ** 2))
+
+
+def remove_blobs(blobs, threshold):
+    print("removing unnecessary blobs,this may take a while...")
+    for blob1,blob2 in combinations(blobs, 2):
+        overlap_sum=blob_overlap(blob1,blob2)
+        if overlap_sum>threshold:
+            if blob1[2]>blob2[2]:
+                blob2[2]=0
+            else:
+                blob1[2]=0
+
+    final_blob=[blob for blob in blobs if blob[2]>0]
+    print("remain blobs: ",len(final_blob))
+    return np.array(final_blob)
 

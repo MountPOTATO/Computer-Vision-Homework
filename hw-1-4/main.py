@@ -51,15 +51,17 @@ def main(argv):
     # show_pic_from_array(convolution(pic_LoG_filter(4),a),save=False)
     # conv_array=convolution(pic_LoG_filter(4), a)
     coord=blob_maximum_extract(pic_convolution(pic))
+    coord=remove_blobs(coord,0.5)
 
     fig, ax = plt.subplots()
 
-
+    (origin_y,origin_x)=pic.shape
     ax.imshow(color_pic, interpolation='nearest')
     for blob in coord:
         y, x, r = blob
-        c = plt.Circle((x, y), r * 1.2, color='red', linewidth=1.5, fill=False)
-        ax.add_patch(c)
+        if y<origin_y and x<origin_x:
+            c = plt.Circle((x, y), r * 9, color='red', linewidth=1.0, fill=False)
+            ax.add_patch(c)
     ax.plot()
     # plt.show()
     plt.savefig("filename.png")
