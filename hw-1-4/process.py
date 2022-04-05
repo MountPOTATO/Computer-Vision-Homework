@@ -10,6 +10,7 @@ from math import sqrt, hypot
 from numpy import arccos
 import numpy as np
 from itertools import combinations
+from tqdm import tqdm
 import cv2
 
 
@@ -20,12 +21,16 @@ def pic_LoG_filter(sigma):
     kernel_size=np.ceil(sigma*sigma_times)
     y,x=np.ogrid[-kernel_size//2:kernel_size//2+1, -kernel_size//2:kernel_size//2+1]
 
+
     # applying LoG
     x_pow2=x*x
     y_pow2=y*y
     sigma_pow2=sigma**2
+    exp_x2 = np.exp(-(x_pow2 / (2. * sigma_pow2)))
+    exp_y2 = np.exp(-(y_pow2 / (2. * sigma_pow2)))
+
     #broadcasting
-    return -(1/(np.pi*sigma_pow2**2))*(1-(x_pow2+y_pow2)/(2*sigma_pow2))*np.exp(-(x_pow2+y_pow2)/(2*sigma_pow2))
+    return (1/(2*np.pi*sigma**4))*(-(2*sigma_pow2)+(x_pow2+y_pow2))*(exp_x2*exp_y2)
 
 
 
@@ -53,10 +58,11 @@ def convolution(kernel, origin_img):
 
 def pic_convolution(origin_img):
     conv_img_list=[]
-    conv_img_num=13
-    sigma_ratio=1.12
+    conv_img_num=10
+    sigma_ratio=1.41
     sigma=1
-    for i in range(conv_img_num):
+    print("start convolution...")
+    for i in tqdm(range(conv_img_num)):
         sigma*=sigma_ratio
         kernel_LoG=pic_LoG_filter(sigma)
 
@@ -79,6 +85,7 @@ def pic_convolution(origin_img):
 
 def blob_maximum_extract(conv_img_list):
 
+    l=len(conv_img_list)
     z_set=set()
     blobs=[]
     if len(conv_img_list)==0:
@@ -87,18 +94,19 @@ def blob_maximum_extract(conv_img_list):
     (h,w)=conv_img_list[0].shape
     for i in range(1,h-5):
         for j in range(1,w-5):
-            kernel_img=conv_img_list[:,i-1:i+2,j-1:j+2]
-            threshold=np.max(kernel_img)
-            if threshold>=20:
-                max_index=kernel_img.argmax()
-                z,y,x=np.unravel_index(max_index,kernel_img.shape)
-                blobs.append((i+y-1,j+x-1,1.12**z))
-                z_set.add(1.12**z)
+            # for k in range(0,l-3):
+                kernel_img=conv_img_list[:,i-1:i+2,j-1:j+2]
+                threshold=np.max(kernel_img)
+                if threshold>=50:
+                    max_index=kernel_img.argmax()
+                    z,y,x=np.unravel_index(max_index,kernel_img.shape)
+                    blobs.append((i+y-1,j+x-1,1.41**z))
+                    z_set.add(1.41**z)
 
     print("found {} blobs".format(len(blobs)))
     z_list=list(z_set)
     z_list.sort()
-    print("sigma value list: ",z_list)
+    # print("sigma value list: ",z_list)
 
     return np.array(list(set(blobs)))
 
@@ -158,7 +166,12 @@ def blob_overlap(blob1, blob2):
 
 def remove_blobs(blobs, threshold):
     print("removing unnecessary blobs,this may take a while...")
-    for blob1,blob2 in combinations(blobs, 2):
+
+    blob_pairs=[(blob1,blob2) for blob1,blob2 in combinations(blobs, 2) ]
+
+    pairs_len=len(blob_pairs)
+    for i in tqdm(range(pairs_len)):
+        (blob1,blob2)=blob_pairs[i]
         overlap_sum=blob_overlap(blob1,blob2)
         if overlap_sum>threshold:
             if blob1[2]>blob2[2]:

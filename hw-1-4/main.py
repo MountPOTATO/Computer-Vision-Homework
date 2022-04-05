@@ -11,6 +11,7 @@ import getopt
 from utils import *
 from process import *
 import matplotlib.pyplot as plt
+import time
 
 
 def main(argv):
@@ -19,7 +20,7 @@ def main(argv):
     scale = 0
     try:
         # get arguments from python command
-        opts, args = getopt.getopt(argv, "hi:o:s:", ["help", "input=", "output=", "scale="])
+        opts, args = getopt.getopt(argv, "hi:s:", ["help", "input=", "scale="])
     except getopt.GetoptError:
         print("#! Error command form.")
         sys.exit(2)
@@ -30,8 +31,6 @@ def main(argv):
             sys.exit(0)
         elif key in ("-i", "--input"):
             input_pic = value
-        elif key in ("-o", "--output"):
-            output_pic = value
         elif key in ("-s", "--scale"):
             try:
                 scale = float(value)
@@ -42,8 +41,7 @@ def main(argv):
             except ValueError:
                 print("Error: scale should be a positive float-type number")
 
-    print("input={},output={},scale={}".format(input_pic, output_pic, scale))
-    # TODO: 入口图像处理
+    # 入口图像处理
 
     # show_pic_from_array(picture_to_array(input_pic))
     pic=picture_to_array(input_pic,scale=scale,gray=True)
@@ -51,7 +49,7 @@ def main(argv):
     # show_pic_from_array(convolution(pic_LoG_filter(4),a),save=False)
     # conv_array=convolution(pic_LoG_filter(4), a)
     coord=blob_maximum_extract(pic_convolution(pic))
-    coord=remove_blobs(coord,0.5)
+    coord=remove_blobs(coord,0.7)
 
     fig, ax = plt.subplots()
 
@@ -60,11 +58,14 @@ def main(argv):
     for blob in coord:
         y, x, r = blob
         if y<origin_y and x<origin_x:
-            c = plt.Circle((x, y), r * 9, color='red', linewidth=1.0, fill=False)
+            c = plt.Circle((x, y), r * 1.41, color='red', linewidth=1.0, fill=False)
             ax.add_patch(c)
     ax.plot()
-    # plt.show()
-    plt.savefig("filename.png")
+
+    now=time.localtime()
+    newt=time.strftime("%Y-%M-%d-%H_%M_%S",now)
+
+    plt.savefig("result/"+newt+"scale-"+str(scale)+".png")
     # draw_pic_from_array(picture_to_array(input_pic,scale=scale),save=True)
 
 
