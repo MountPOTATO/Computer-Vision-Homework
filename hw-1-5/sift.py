@@ -27,7 +27,7 @@ def get_match_from_descriptor(descriptor1,descriptor2):
     good = []
 
     for m,n in matches:
-        if m.distance < 0.75 * n.distance:
+        if m.distance < 0.7 * n.distance:
             good.append(m)
 
     return good

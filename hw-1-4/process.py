@@ -36,10 +36,10 @@ def pic_LoG_filter(sigma):
 
 def convolution(kernel, origin_img):
     """
-
-    :param kernel:
-    :param origin_img:
-    :return:
+    hand-write convolution
+    :param kernel: convolution kernel
+    :param origin_img: origin input img
+    :return: the convolution result
     """
 
     y_k,x_k=kernel.shape
@@ -57,6 +57,11 @@ def convolution(kernel, origin_img):
 
 
 def pic_convolution(origin_img):
+    """
+    the LoG convolution process
+    :param origin_img: origin input img
+    :return: an np.array of the convolution result
+    """
     conv_img_list=[]
     conv_img_num=10
     sigma_ratio=1.41
@@ -84,8 +89,11 @@ def pic_convolution(origin_img):
 
 
 def blob_maximum_extract(conv_img_list):
-
-    l=len(conv_img_list)
+    """
+    given a convolution result list , apply LoG to detect maximum value
+    :param conv_img_list: the output of pic_convolution
+    :return: available points with sigma
+    """
     z_set=set()
     blobs=[]
     if len(conv_img_list)==0:
@@ -104,8 +112,7 @@ def blob_maximum_extract(conv_img_list):
                     z_set.add(1.41**z)
 
     print("found {} blobs".format(len(blobs)))
-    z_list=list(z_set)
-    z_list.sort()
+
     # print("sigma value list: ",z_list)
 
     return np.array(list(set(blobs)))
@@ -113,7 +120,7 @@ def blob_maximum_extract(conv_img_list):
 
 
 
-
+# from scipy
 def blob_overlap(blob1, blob2):
     """Finds the overlapping area fraction between two blobs.
     Returns a float representing fraction of overlapped area.
@@ -165,6 +172,12 @@ def blob_overlap(blob1, blob2):
 
 
 def remove_blobs(blobs, threshold):
+    """
+    removing redundant blobs
+    :param blobs: the output of blob_maximum_extract
+    :param threshold: the area's maximum overlap rate
+    :return: the final blobs
+    """
     print("removing unnecessary blobs,this may take a while...")
 
     blob_pairs=[(blob1,blob2) for blob1,blob2 in combinations(blobs, 2) ]
