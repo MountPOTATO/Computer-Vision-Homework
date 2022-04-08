@@ -7,10 +7,7 @@
 """
 
 import getopt
-import sys
 from utils import *
-import matplotlib.pyplot as plt
-import time
 from sift import *
 
 
