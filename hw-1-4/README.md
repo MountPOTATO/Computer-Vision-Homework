@@ -1,36 +1,34 @@
 # Scale Invariant Points Detection
 
-## 运行要求
+## Environment Requirements
 
-* 编程语言：python>=3.7
-* 环境要求：
-  * tqdm (用于显示个别算法环节进度)
-  * cv2 (cv2只用于卷积以加快速度，即调用cv2.filter2D方法，并未使用于算法核心部分)
+* Language：python>=3.7
+* Requirements：
+  * tqdm
+  * cv2 (**cv2 is only applied in convolution process (cv2.filter2D)，not involved in other alogrithm's core functions**)
   * numpy 
   * matplotlib
 
 
 
-## 运行方式
+## How to Run
 
-切换目录到 `code/hw-1-4` 下：
+change the directory to  `assmt_1/hw-1-4` :
 
 ```shell
-cd code/hw-1-4
+cd assmt_1/hw-1-4
 ```
 
-确保虚拟环境达到运行要求后，输入：
+make sure your visual environment meet the above requirements, and enter：
 
 ```shell
 python main.py -i input/butterfly.jpeg -s 1.1
 ```
 
-其中:
+* -i : path of the input image，there are example images in the `input` directory
+* -s: scale of the output image（the algorithm is implemented using LoG, which takes time. For a short runtime, it's recommended that the scale value between 1 and 1.6
 
-* -i : 指输入图片的路径，在input文件夹中有可供使用的示例图片
-* -s: 图片尺度，比如放大到图片原来的1.1倍（代码采用LoG实现，运行时间较长，建议在1-1.6倍放大下运行
-
- 运行后，可以看到类似以下运行结果：
+ you can see the following result: 
 
 ```
 start convolution...
@@ -41,10 +39,8 @@ removing unnecessary blobs,this may take a while...
 remain blobs:  1016
 ```
 
-表示程序运行成功
-
-输出的结果图片存放在result文件夹中，为随机命名
+the output image will be put in `result` directory
 
 
 
-你可以尝试输入其他图片的路径
+you can try other image path as an alternative input
