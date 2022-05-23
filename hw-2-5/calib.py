@@ -19,9 +19,6 @@ images=glob.glob("img/data/*.jpg")
 board_size=(9,6)
 img_size=(640,480)
 
-# # 亚像素角点检测 criteria
-# criteria = (cv2.TERM_CRITERIA_MAX_ITER | cv2.TERM_CRITERIA_EPS, 30, 0.001)
-
 #wcs
 objp = np.zeros((board_size[0] * board_size[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:board_size[0], 0:board_size[1]].T.reshape(-1, 2)
@@ -43,17 +40,17 @@ for path in images:
 
 
 # 相机标定
-ret,M,dist,rvecs,tvecs=cv2.calibrateCamera(obj_points,
+ret,K,dist,rvecs,tvecs=cv2.calibrateCamera(obj_points,
                                            img_points,
                                            img_size,
                                            None,None)
 
 
 
-print("M:",M)
+print("K:",K)
 print("Distortion:",dist)
 
-np.save("instrinsic/camera_matrix",M)
+np.save("instrinsic/camera_matrix",K)
 np.save("instrinsic/distortion_coefficient",dist)
 
 
