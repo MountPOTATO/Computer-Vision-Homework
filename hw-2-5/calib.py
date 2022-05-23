@@ -50,8 +50,8 @@ ret,K,dist,rvecs,tvecs=cv2.calibrateCamera(obj_points,
 print("K:",K)
 print("Distortion:",dist)
 
-np.save("instrinsic/camera_matrix",K)
-np.save("instrinsic/distortion_coefficient",dist)
+np.save("intrinsic/camera_matrix", K)
+np.save("intrinsic/distortion_coefficient", dist)
 
 
 

@@ -15,9 +15,9 @@ h,w=img.shape[0],img.shape[1]
 
 
 
-# load instrinsic
-K=np.load("instrinsic/camera_matrix.npy")
-distortion=np.load("instrinsic/distortion_coefficient.npy")
+# load intrinsic
+K=np.load("intrinsic/camera_matrix.npy")
+distortion=np.load("intrinsic/distortion_coefficient.npy")
 
 # undistort,get
 undst=cv2.undistort(img,K,distortion,None)
