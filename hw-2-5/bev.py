@@ -36,15 +36,15 @@ _, corners = cv2.findChessboardCorners(gray, (9, 6), None)
 corner_point=np.array([corners[0,:],corners[8,:],corners[-6,:],corners[-1,:]])
 
 # corner points on wcs as pc
-pc_list = np.array([w_point[0,:][:-1],w_point[8,:][:-1],w_point[-6,:][:-1],w_point[-1,:][:-1]])
+pw_list = np.array([w_point[0, :][:-1], w_point[8, :][:-1], w_point[-6, :][:-1], w_point[-1, :][:-1]])
 
 
 # bird eye view coord pb
-# assuming M/H=30, N/2=400, M/2=500
+# assuming M/H=70, N/2=200, M/2=600
 pb_list = np.array([w_point[0,:][:-1],w_point[8,:][:-1],w_point[-6,:][:-1],w_point[-1,:][:-1]])
 for index,pb in enumerate(pb_list):
-    pb[0]=pc_list[index][0]*30+400
-    pb[1]=-pc_list[index][1]*30+500
+    pb[0]= pw_list[index][0] * 70 + 200
+    pb[1]= pw_list[index][1] * 70 + 600
 
 
 # generate transformation matrix:
